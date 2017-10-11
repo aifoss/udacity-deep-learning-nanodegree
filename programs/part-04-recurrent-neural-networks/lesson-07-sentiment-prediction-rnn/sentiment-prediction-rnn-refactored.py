@@ -21,7 +21,10 @@ from collections import Counter
 
 class DataPreprocessor:
     
-    def load_and_preprocess_data(self, reviews_file='reviews.txt', labels_file='labels.txt', seq_len=200):
+    def load_and_preprocess_data(self, 
+                                 reviews_file='reviews.txt', 
+                                 labels_file='labels.txt', 
+                                 seq_len=200):
         data = Data()
         
         dataLoader = DataLoader()
@@ -164,7 +167,8 @@ class DataEncoder:
 class DataFilterer:
     
     def filter_out_zero_len_entries(self, reviews_to_ints, labels_to_ints):
-        non_zero_len_indices = [ii for ii, review in enumerate(reviews_to_ints) if len(review) > 0]
+        non_zero_len_indices = 
+            [ii for ii, review in enumerate(reviews_to_ints) if len(review) > 0]
         reviews_to_ints = [reviews_to_ints[ii] for ii in non_zero_len_indices]
         labels_to_ints = np.array([labels_to_ints[ii] for ii in non_zero_len_indices])
         self.log()
@@ -290,19 +294,24 @@ class RNNetwork:
     
     def add_forward_pass(self):
         with self.graph.as_default():
-            self.outputs, self.final_state = tf.nn.dynamic_rnn(self.cell, self.embed, initial_state=self.init_state)
+            self.outputs, self.final_state = tf.nn.dynamic_rnn(self.cell, 
+                                                               self.embed, 
+                                                               initial_state=self.init_state)
         self.log_forward_pass()
         
     def add_train_loss_computation(self, learning_rate=0.001):
         with self.graph.as_default():
-            self.predictions = tf.contrib.layers.fully_connected(self.outputs[:, -1], 1, activation_fn=tf.sigmoid)
+            self.predictions = tf.contrib.layers.fully_connected(self.outputs[:, -1], 
+                                                                 1, 
+                                                                 activation_fn=tf.sigmoid)
             self.cost = tf.losses.mean_squared_error(self.labels_, self.predictions)
             self.optimizer = tf.train.AdamOptimizer(learning_rate).minimize(self.cost)
         self.log_train_loss_computation() 
     
     def add_validation_accuracy_computation(self):
         with self.graph.as_default():
-            self.correct_pred = tf.equal(tf.cast(tf.round(self.predictions), tf.int32), self.labels_)
+            self.correct_pred = tf.equal(tf.cast(tf.round(self.predictions), tf.int32), 
+                                         self.labels_)
             self.accuracy = tf.reduce_mean(tf.cast(self.correct_pred, tf.float32))
         self.log_validation_accuracy_computation()    
     
@@ -363,8 +372,10 @@ class NetworkTrainer:
                             self.network.keep_prob: 0.5,
                             self.network.init_state: state}
                     
-                    loss, state, _ = sess.run([self.network.cost, self.network.final_state, self.network.optimizer],
-                                             feed_dict=feed)
+                    loss, state, _ = sess.run([self.network.cost, 
+                                               self.network.final_state, 
+                                               self.network.optimizer],
+                                               feed_dict=feed)
                     
                     if iteration%5==0:
                         print("Epoch: {}/{}".format(e+1, self.epochs),
@@ -373,15 +384,19 @@ class NetworkTrainer:
 
                     if iteration%25==0:
                         val_acc = []
-                        val_state = sess.run(self.network.cell.zero_state(self.batch_size, tf.float32))
+                        val_state = sess.run(self.network.cell.zero_state(self.batch_size, 
+                                                                          tf.float32))
                         
-                        for x, y in self.get_batches(self.datasets.val_x, self.datasets.val_y, self.batch_size):
+                        for x, y in self.get_batches(self.datasets.val_x, 
+                                                     self.datasets.val_y, 
+                                                     self.batch_size):
                             feed = {self.network.inputs_: x,
                                     self.network.labels_: y[:, None],
                                     self.network.keep_prob: 1,
                                     self.network.init_state: val_state}
                             
-                            batch_acc, val_state = sess.run([self.network.accuracy, self.network.final_state], 
+                            batch_acc, val_state = sess.run([self.network.accuracy, 
+                                                             self.network.final_state], 
                                                             feed_dict=feed)
                             val_acc.append(batch_acc)
                             
@@ -427,7 +442,9 @@ class NetworkTester:
                         self.network.keep_prob: 1,
                         self.network.init_state: test_state}
                 
-                batch_acc, test_state = sess.run([self.network.accuracy, self.network.final_state], feed_dict=feed)
+                batch_acc, test_state = sess.run([self.network.accuracy, 
+                                                  self.network.final_state], 
+                                                 feed_dict=feed)
                 self.test_acc.append(batch_acc)
                 
             print("Test accuracy: {:.3f}".format(np.mean(self.test_acc)))
