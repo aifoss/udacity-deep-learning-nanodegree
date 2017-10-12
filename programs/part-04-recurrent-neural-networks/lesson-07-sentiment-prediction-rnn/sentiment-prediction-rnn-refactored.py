@@ -10,7 +10,6 @@ import numpy as np
 import tensorflow as tf
 
 from string import punctuation
-
 from collections import Counter
 
 
@@ -161,14 +160,13 @@ class DataEncoder:
 
 # ### DataFilterer
 
-# In[7]:
+# In[8]:
 
 
 class DataFilterer:
     
     def filter_out_zero_len_entries(self, reviews_to_ints, labels_to_ints):
-        non_zero_len_indices = 
-            [ii for ii, review in enumerate(reviews_to_ints) if len(review) > 0]
+        non_zero_len_indices =             [ii for ii, review in enumerate(reviews_to_ints) if len(review) > 0]
         reviews_to_ints = [reviews_to_ints[ii] for ii in non_zero_len_indices]
         labels_to_ints = np.array([labels_to_ints[ii] for ii in non_zero_len_indices])
         self.log()
@@ -180,7 +178,7 @@ class DataFilterer:
 
 # ### DataFormatter
 
-# In[8]:
+# In[9]:
 
 
 class DataFormatter:
@@ -217,7 +215,7 @@ class DataFormatter:
 
 # ## DataSetCreator
 
-# In[9]:
+# In[10]:
 
 
 class DataSetCreator:
@@ -246,7 +244,7 @@ class DataSetCreator:
 
 # ### DataSets
 
-# In[10]:
+# In[11]:
 
 
 class DataSets:
@@ -262,7 +260,7 @@ class DataSets:
 
 # ## RNNetwork
 
-# In[16]:
+# In[12]:
 
 
 class RNNetwork:
@@ -342,7 +340,7 @@ class RNNetwork:
 
 # ## NetworkTrainer
 
-# In[12]:
+# In[13]:
 
 
 class NetworkTrainer:
@@ -418,7 +416,7 @@ class NetworkTrainer:
 
 # ## NetworkTester
 
-# In[19]:
+# In[14]:
 
 
 class NetworkTester:
@@ -459,7 +457,7 @@ class NetworkTester:
 
 # # SentimentRNN
 
-# In[20]:
+# In[15]:
 
 
 class SentimentRNN:
@@ -501,18 +499,38 @@ class SentimentRNN:
         print('\nTESTING COMPLETE\n')
 
 
-# In[21]:
+# In[16]:
 
 
 rnn = SentimentRNN()
 
+
+# In[17]:
+
+
 rnn.load_and_prepare_data()
+
+
+# In[18]:
+
 
 rnn.create_train_val_test_sets()
 
+
+# In[19]:
+
+
 rnn.build_network()
 
+
+# In[24]:
+
+
 rnn.train_network()
+
+
+# In[25]:
+
 
 rnn.test_network()
 
