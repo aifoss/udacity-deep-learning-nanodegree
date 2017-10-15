@@ -15,6 +15,8 @@ import matplotlib.pyplot as plt
 from tensorflow.examples.tutorials.mnist import input_data
 
 
+# # Loading Data
+
 # ## DataLoader
 
 # In[2]:
@@ -61,8 +63,6 @@ class ImageDisplayer:
 
         fig.tight_layout(pad=0.1)
 
-
-# # Loading Data
 
 # In[4]:
 
@@ -285,6 +285,8 @@ modelRunner = ModelRunner()
 modelRunner.run_autoencoder(simpleAutoencoder, mnist, image_shape, epochs, batch_size)
 
 
+# # Running Convolutional Autoencoder
+
 # ## ConvolutionalAutoencoder
 
 # In[14]:
@@ -381,8 +383,6 @@ class ConvolutionalAutoencoder:
     def upsample(self, x, size):
         return tf.image.resize_nearest_neighbor(x, size)
 
-
-# # Running Convolutional Autoencoder
 
 # In[15]:
 
