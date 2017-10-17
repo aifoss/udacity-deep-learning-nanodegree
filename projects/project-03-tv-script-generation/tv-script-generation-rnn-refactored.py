@@ -9,8 +9,6 @@
 import os
 import pickle
 
-from collections import Counter
-
 from distutils.version import LooseVersion
 import warnings
 
@@ -27,12 +25,14 @@ from tensorflow.contrib import seq2seq
 
 class DataLoader:
     
-    def load_data(self, path):
+    def load_data(self, data_dir):
         """
-        Load Dataset from File
+        Load dataset from file.
+        
+        :param data_dir: Directory where the dataset is located
         """
  
-        input_file = os.path.join(path)
+        input_file = os.path.join(data_dir)
         with open(input_file, "r") as f:
             data = f.read()
             
@@ -111,7 +111,7 @@ class DataPreprocessor:
     
     def preprocess_and_save_data(self, text):
         """
-        Preprocess and save text data
+        Preprocess and save text data.
         
         :param text: The text of tv scripts split into words
         """
@@ -125,32 +125,17 @@ class DataPreprocessor:
         text = text.split()
 
         vocab_to_int, int_to_vocab = self.create_lookup_tables(text)
+        
         int_text = [vocab_to_int[word] for word in text]
         
         PickleHelper().save_preprocessed_data((int_text, vocab_to_int, int_to_vocab, punc_dict))
-        
-    
-    def create_lookup_tables(self, text):
-        """
-        Create lookup tables for vocabulary
-        
-        :param text: The text of tv scripts split into words
-        :return: A tuple of dicts (vocab_to_int, int_to_vocab)
-        """
-        
-        word_counts = Counter(text)
-        sorted_vocab = sorted(word_counts, key=word_counts.get, reverse=True)
-        int_to_vocab = {ii: word for ii, word in enumerate(sorted_vocab)}
-        vocab_to_int = {word: ii for ii, word in int_to_vocab.items()}
-        
-        return (vocab_to_int, int_to_vocab)
     
     
     def create_punc_lookup_table(self):
         """
-        Generate a dict to turn punctuation into a token.
+        Generate a dict to turn punctuations into tokens.
         
-        :return: Tokenize dictionary where the key is the punctuation and the value is the token
+        :return: Tokenized dictionary where the key is the punctuation and the value is the token
         """
         
         punc_dict = {}
@@ -166,6 +151,19 @@ class DataPreprocessor:
         punc_dict['\n'] = "||Return||"
 
         return punc_dict
+    
+    
+    def create_lookup_tables(self, text):
+        """
+        Create lookup tables for vocabulary.
+        
+        :param text: The text of tv scripts split into words
+        :return: A tuple of dicts (vocab_to_int, int_to_vocab)
+        """
+        words = set(text)
+        vocab_to_int = {word: ii for ii, word in enumerate(words)}
+        int_to_vocab = dict(enumerate(words))
+        return (vocab_to_int, int_to_vocab)
 
 
 # In[9]:
@@ -181,19 +179,19 @@ class PickleHelper:
         
     def load_preprocessed_data(self):
         """
-        Load the Preprocessed training data and return them in batches of <batch_size> or less
+        Load the Preprocessed training data and return them in batches of <batch_size> or less.
         """
         return pickle.load(open('preprocess.p', mode='rb'))
     
     def save_params(self, params):
         """
-        Save parameters to file
+        Save parameters to file.
         """
         pickle.dump(params, open('params.p', 'wb'))
     
     def load_params(self):
         """
-        Load parameters from file
+        Load parameters from file.
         """
         return pickle.load(open('params.p', mode='rb'))
 
@@ -267,7 +265,7 @@ class RNNBuilder:
         """
         Create TF Placeholders for input, targets, and learning rate.
         
-        :return: Tuple (input, targets, learning rate)
+        :return: Tuple (input, targets, learning_rate)
         """
         inputs = tf.placeholder(tf.int32, [None, None], name='input')
         targets = tf.placeholder(tf.int32, [None, None], name='targets')
@@ -283,7 +281,7 @@ class RNNBuilder:
         :param rnn_size: Size of RNNs
         :param num_rnn_layers: Number of RNN (LSTM) layers
         :param keep_prob: Keep probability value
-        :return: Tuple (cell, initialize state)
+        :return: Tuple (cell, initial_state)
         """
         
         cell = tf.contrib.rnn.MultiRNNCell(
@@ -298,8 +296,10 @@ class RNNBuilder:
     def build_lstm_cell(self, rnn_size, keep_prob):
         """ 
         Build LSTM cell and apply dropout.
+        
         :param rnn_size: Size of RNNs
         :param keep_prob: Keep probability value
+        :return: LSTM cell (with dropout applied)
         """
         lstm = tf.contrib.rnn.BasicLSTMCell(rnn_size)
         drop = tf.contrib.rnn.DropoutWrapper(lstm, output_keep_prob=keep_prob)
@@ -313,20 +313,18 @@ class RNNBuilder:
         :param input_data: TF placeholder for text input
         :param vocab_size: Number of words in vocabulary
         :param embed_dim: Number of embedding dimensions
-        :return: Embedded input.
+        :return: Embedded input
         """        
-        embedding = tf.Variable(tf.random_uniform((vocab_size, embed_dim), -1, 1))
-        embed = tf.nn.embedding_lookup(embedding, input_data)
-        return embed
+        return tf.contrib.layers.embed_sequence(input_data, vocab_size, embed_dim)
     
     
     def build_rnn(self, cell, inputs):
         """
-        Create a RNN using a RNN Cell
+        Create a RNN using a RNN Cell.
         
         :param cell: RNN Cell
         :param inputs: Input text data
-        :return: Tuple (Outputs, Final State)
+        :return: Tuple (outputs, final_state)
         """
         outputs, final_state = tf.nn.dynamic_rnn(cell, inputs, dtype=tf.float32)
         final_state = tf.identity(final_state, name='final_state')
@@ -335,14 +333,14 @@ class RNNBuilder:
     
     def build_nn(self, cell, rnn_size, input_data, vocab_size, embed_dim):
         """
-        Build part of the neural network
+        Build part of the neural network.
         
         :param cell: RNN cell
         :param rnn_size: Size of rnns
         :param input_data: Input data
         :param vocab_size: Vocabulary size
         :param embed_dim: Number of embedding dimensions
-        :return: Tuple (Logits, FinalState)
+        :return: Tuple (logits, final_state)
         """
         
         embed = self.get_embed(input_data, vocab_size, embed_dim)
@@ -355,7 +353,7 @@ class RNNBuilder:
         return (logits, final_state)
 
 
-# In[16]:
+# In[21]:
 
 
 class RNNGraphBuilder:
@@ -370,75 +368,89 @@ class RNNGraphBuilder:
         """
         Build RNN graph.
         
-        :param int_to_vocab: Mapping of input words
+        :param int_to_vocab: Integer mapping of input text words
         :param rnn_size: Size of rnns
         :param num_rnn_layers: Number of RNN (LSTM) layers
         :param keep_prob: Keep probability value
         :param embed_dim: Number of embedding dimensions
-        :return: Tuple (RNN, TrainGraph, Probs) 
+        :return: Tuple (rnn, train_graph, probs) 
         """
         
         train_graph = tf.Graph()
+        
         rnn = RNN()
         rnnBuilder = RNNBuilder()
+        optimizerTuner = OptimizerTuner()
 
         with train_graph.as_default():
-            vocab_size = len(int_to_vocab)
-            
+            # Placeholders
             input_text, targets, lr = rnnBuilder.create_placeholders()
+            rnn.input_text, rnn.targets, rnn.lr = input_text, targets, lr
+            
+            # Cell, Initial State
             input_data_shape = tf.shape(input_text)
-            
-            rnn.input_text = input_text
-            rnn.targets = targets
-            rnn.lr = lr
-            
             cell, initial_state = rnnBuilder.build_init_cell(input_data_shape[0], 
                                                              rnn_size, 
                                                              num_rnn_layers, 
                                                              keep_prob)
-            
             rnn.initial_state = initial_state
  
+            # Logits, Final State
+            vocab_size = len(int_to_vocab)
             logits, final_state = rnnBuilder.build_nn(cell, 
                                                       rnn_size, 
                                                       input_text, 
                                                       vocab_size, 
                                                       embed_dim)
-    
             rnn.final_state = final_state
 
             # Probabilities for generating words
             probs = tf.nn.softmax(logits, name='probs')
 
             # Loss function
-            cost = seq2seq.sequence_loss(logits,
+            cost = seq2seq.sequence_loss(logits, 
                                          targets, 
                                          tf.ones([input_data_shape[0], input_data_shape[1]]))
 
             # Optimizer
             optimizer = tf.train.AdamOptimizer(lr)
-
-            # Gradient Clipping
-            gradients = optimizer.compute_gradients(cost)
-            capped_gradients = [(tf.clip_by_value(grad, -1., 1.), var)                                 for grad, var in gradients if grad is not None]
-            train_op = optimizer.apply_gradients(capped_gradients)
-            
-            rnn.cost = cost
-            rnn.train_op = train_op
+            train_op = optimizerTuner.get_gradient_clipped_optimizer(optimizer, cost)
+            rnn.cost, rnn.train_op = cost, train_op
             
             return (rnn, train_graph, probs)
 
 
-# In[17]:
-
-
-rnn_size = 256
-num_rnn_layers = 2
-keep_prob = 0.75
-embed_dim = 200
-
-
 # In[18]:
+
+
+class OptimizerTuner:
+    
+    def get_gradient_clipped_optimizer(self, optimizer, cost):
+        """
+        Apply gradient clipping to optimizer.
+        
+        :param optimizer: Optimizer to apply gradient clipping to
+        :param cost: Loss function
+        :return: Optimizer with gradient clipping
+        """
+        
+        gradients = optimizer.compute_gradients(cost)
+        capped_gradients = [(tf.clip_by_value(grad, -1., 1.), var)                             for grad, var in gradients if grad is not None]
+        train_op = optimizer.apply_gradients(capped_gradients)
+        
+        return train_op
+
+
+# In[19]:
+
+
+rnn_size = 1024 # [25, 1024]
+num_rnn_layers = 2 
+keep_prob = 0.75
+embed_dim = 200 
+
+
+# In[22]:
 
 
 rnnGraphBuilder = RNNGraphBuilder()
@@ -452,7 +464,7 @@ rnn, train_graph, probs = rnnGraphBuilder.build_rnn_graph(int_to_vocab,
 
 # ## Training the Network
 
-# In[19]:
+# In[23]:
 
 
 class RNNTrainer:
@@ -462,27 +474,26 @@ class RNNTrainer:
         Train and save RNN model.
         
         :param rnn: RNN to train and save
-        :train_graph: RNN graph
+        :param train_graph: RNN graph
         """
             
         with tf.Session(graph=train_graph) as sess:
             sess.run(tf.global_variables_initializer())
             
             dataBatchGenerator = DataBatchGenerator()
-        
             batches = dataBatchGenerator.get_batches(int_text, batch_size, seq_length)
 
             for epoch_i in range(num_epochs):
                 feed = {rnn.input_text: batches[0][0]}
                 
-                state = sess.run(rnn.initial_state, feed_dict=feed)
+                state = sess.run(rnn.initial_state, 
+                                 feed_dict=feed)
 
                 for batch_i, (x, y) in enumerate(batches):
-                    feed = {
-                        rnn.input_text: x,
-                        rnn.targets: y,
-                        rnn.initial_state: state,
-                        rnn.lr: learning_rate}
+                    feed = {rnn.input_text: x,
+                            rnn.targets: y,
+                            rnn.initial_state: state,
+                            rnn.lr: learning_rate}
                     
                     train_loss, state, _ = sess.run([rnn.cost, rnn.final_state, rnn.train_op],
                                                      feed_dict=feed)
@@ -495,21 +506,21 @@ class RNNTrainer:
                                 len(batches),
                                 train_loss))
 
-            # Save Model
+            # Save model
             saver = tf.train.Saver()
             saver.save(sess, save_dir)
             
             print('\nModel Trained and Saved')
 
 
-# In[20]:
+# In[24]:
 
 
 class DataBatchGenerator:
 
     def get_batches(self, int_text, batch_size, seq_len):
         """
-        Return batches of input and target
+        Return batches of input and target.
         
         :param int_text: Text with the words replaced by their ids
         :param batch_size: The size of batch
@@ -555,7 +566,7 @@ class DataBatchGenerator:
 
         # Drop the last few characters to make only full batches
         x_data = np.array(int_text[: full_batch_size])
-        y_data = np.array(int_text[1: full_batch_size + 1])
+        y_data = np.array(int_text[1: full_batch_size+1])
 
         x_batches = np.split(x_data.reshape(batch_size, -1), n_batches, 1)
         y_batches = np.split(y_data.reshape(batch_size, -1), n_batches, 1)
@@ -566,18 +577,18 @@ class DataBatchGenerator:
         return np.array(list(zip(x_batches, y_batches)))
 
 
-# In[21]:
+# In[25]:
 
 
-learning_rate = 0.001
-num_epochs = 50
+learning_rate = 0.01 # [0.001, 0.7]
+num_epochs = 100 # [20, 400]
 batch_size = 128
-seq_length = 2
+seq_length = 10 # [5, 50]
 show_every_n_batches = 10
 save_dir = './save'
 
 
-# In[22]:
+# In[27]:
 
 
 rnnTrainer = RNNTrainer()
@@ -587,21 +598,17 @@ rnnTrainer.train_rnn(rnn, train_graph)
 
 # ## Saving Parameters
 
-# In[23]:
+# In[28]:
 
 
 pickleHelper = PickleHelper()
-
-
-# In[24]:
-
 
 pickleHelper.save_params((seq_length, save_dir))
 
 
 # ## Checkpoint
 
-# In[25]:
+# In[29]:
 
 
 _, vocab_to_int, int_to_vocab, punc_dict = pickleHelper.load_preprocessed_data()
@@ -610,14 +617,14 @@ seq_length, load_dir = pickleHelper.load_params()
 
 # ## Generating TV Script
 
-# In[26]:
+# In[36]:
 
 
 class TVScriptGenerator:
     
     def generate_tv_script(self, gen_length, prime_word):
         """
-        Generate TV script using the trainde RNN model.
+        Generate TV script using the trainded RNN model.
         
         :param gen_length: Generation length
         :param prime_word: Prime word to use 
@@ -628,6 +635,7 @@ class TVScriptGenerator:
 
         tensorLoader = TensorLoader()
         wordSelector = WordSelector()
+        sentenceFormatter = SentenceFormatter()
         
         with tf.Session(graph=loaded_graph) as sess:
             sess.run(tf.global_variables_initializer())
@@ -642,16 +650,18 @@ class TVScriptGenerator:
             # Sentence generation setup
             gen_sentences = [prime_word + ':']
             feed = {input_text: np.array([[1]])}
-            prev_state = sess.run(initial_state, feed_dict=feed)
+            prev_state = sess.run(initial_state, 
+                                  feed_dict=feed)
 
             # Generate sentences
             for n in range(gen_length):
-                # Dynamic Input
+                # Dynamic input
                 dyn_input = [[vocab_to_int[word] for word in gen_sentences[-seq_length:]]]
                 dyn_seq_length = len(dyn_input[0])
 
-                # Get Prediction
-                feed = {input_text: dyn_input, initial_state: prev_state}
+                # Get prediction
+                feed = {input_text: dyn_input, 
+                        initial_state: prev_state}
                 probabilities, prev_state = sess.run([probs, final_state],
                                                       feed_dict=feed)
 
@@ -659,40 +669,35 @@ class TVScriptGenerator:
                                                    int_to_vocab)
                 gen_sentences.append(pred_word)
 
-            # Remove punctuation tokens
-            tv_script = ' '.join(gen_sentences)
-            for key, token in punc_dict.items():
-                ending = ' ' if key in ['\n', '(', '"'] else ''
-                tv_script = tv_script.replace(' ' + token.lower(), key)
-            tv_script = tv_script.replace('\n ', '\n')
-            tv_script = tv_script.replace('( ', '(')
-
+            # Format generated sentences
+            tv_script = sentenceFormatter.format_generated_sentences(gen_sentences)
+            
             return tv_script
 
 
-# In[27]:
+# In[31]:
 
 
 class TensorLoader:
 
     def get_tensors(self, loaded_graph):
         """
-        Get input, initial state, final state, and probabilities tensor from <loaded_graph>
+        Get input, initial_state, final_state, and pros tensor from <loaded_graph>.
         
         :param loaded_graph: TensorFlow graph loaded from file
-        :return: Tuple (InputTensor, InitialStateTensor, FinalStateTensor, ProbsTensor)
+        :return: Tuple (input, initial_state, final_state, probs)
         """
-
-        with tf.Session(graph=loaded_graph) as sess:
-            inputs = tf.get_default_graph().get_tensor_by_name("input:0")
-            initial_state = tf.get_default_graph().get_tensor_by_name("initial_state:0")
-            final_state = tf.get_default_graph().get_tensor_by_name("final_state:0")
-            probs = tf.get_default_graph().get_tensor_by_name("probs:0")
-
+        
+        with loaded_graph.as_default():
+            inputs = loaded_graph.get_tensor_by_name("input:0")
+            initial_state = loaded_graph.get_tensor_by_name("initial_state:0")
+            final_state = loaded_graph.get_tensor_by_name("final_state:0")
+            probs = loaded_graph.get_tensor_by_name("probs:0")
+            
         return (inputs, initial_state, final_state, probs)
 
 
-# In[28]:
+# In[32]:
 
 
 class WordSelector:
@@ -705,19 +710,40 @@ class WordSelector:
         :param int_to_vocab: Dictionary of word ids as the keys and words as the values
         :return: String of the predicted word
         """
-    #     max_idx = np.argmax(probabilities)
-    #     return int_to_vocab[max_idx]
-
         top_n = 5
         p = np.squeeze(probabilities)
         p[np.argsort(p)[:-top_n]] = 0
         p = p / np.sum(p)
         i = np.random.choice(len(int_to_vocab), 1, p=p)[0]
-        
         return int_to_vocab[i]
 
 
-# In[29]:
+# In[33]:
+
+
+class SentenceFormatter:
+    
+    def format_generated_sentences(self, gen_sentences):
+        """
+        Remove punctuation tokens from generated sentences.
+        
+        :param gen_sentences: Generated sentences
+        :return: Formatted sentences
+        """
+        
+        tv_script = ' '.join(gen_sentences)
+        
+        for key, token in punc_dict.items():
+            ending = ' ' if key in ['\n', '(', '"'] else ''
+            tv_script = tv_script.replace(' ' + token.lower(), key)
+        
+        tv_script = tv_script.replace('\n ', '\n')
+        tv_script = tv_script.replace('( ', '(')
+        
+        return tv_script
+
+
+# In[34]:
 
 
 gen_length = 200
@@ -725,7 +751,7 @@ gen_length = 200
 prime_word = 'moe_szyslak'
 
 
-# In[30]:
+# In[37]:
 
 
 tvScriptGenerator = TVScriptGenerator()
