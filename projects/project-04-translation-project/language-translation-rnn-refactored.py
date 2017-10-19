@@ -251,13 +251,6 @@ class Seq2SeqRNN:
         self.target_seq_len = None
         self.max_target_len = None
         
-#         self.encoder_output = None
-#         self.encoder_state = None
-        
-#         self.decoder_input = None
-#         self.training_decoder_output = None
-#         self.inference_decoder_output = None
-        
         self.training_logits = None
         self.inference_logits = None
         
