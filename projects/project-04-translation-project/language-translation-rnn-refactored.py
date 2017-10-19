@@ -389,8 +389,9 @@ class RNNBuilder:
         output_layer = Dense(target_vocab_size,
                              kernel_initializer=initializer)
 
-        # Training decoder
-        with tf.variable_scope("decode"):
+        with tf.variable_scope("decode") as decoding_scope:
+            
+            # Training decoder
             training_decoder_output = self.get_training_decoding(enc_state, 
                                                                  dec_cell, 
                                                                  dec_embed, 
@@ -398,8 +399,9 @@ class RNNBuilder:
                                                                  max_target_len, 
                                                                  output_layer)
 
-        # Inference decoder
-        with tf.variable_scope("decode", reuse=True):
+            decoding_scope.reuse_variables()    
+            
+            # Inference decoder
             inference_decoder_output = self.get_inference_decoding(enc_state, 
                                                                    dec_cell, 
                                                                    dec_embedding, 
@@ -595,15 +597,15 @@ class OptimizerTuner:
         return train_op
 
 
-# In[36]:
+# In[18]:
 
 
-epochs = 20
+epochs = 10
 batch_size = 128
 rnn_size = 256
-num_layers = 2
-encoding_embedding_size = 20
-decoding_embedding_size = 20
+num_layers = 3
+encoding_embedding_size = 128
+decoding_embedding_size = 128
 learning_rate = 0.001
 keep_probability = 0.75
 display_step = 20
@@ -640,7 +642,7 @@ rnn, train_graph = graphBuilder.build_train_graph(batch_size,
 
 # ## Training Seq2Seq Model
 
-# In[34]:
+# In[22]:
 
 
 class ModelTrainer:
@@ -706,7 +708,7 @@ class ModelTrainer:
             saver = tf.train.Saver()
             saver.save(sess, save_path)
         
-            print('Model Trained and Saved')
+            print('\nModel Trained and Saved')
 
 
 # In[23]:
@@ -885,7 +887,7 @@ validationSetBatchCreator = ValidationSetBatchCreator()
 save_path = 'checkpoints/dev'
 
 
-# In[37]:
+# In[31]:
 
 
 modelTrainer = ModelTrainer()
@@ -915,7 +917,7 @@ load_path = pickleHelper.load_params()
 
 # ## Checking Translation
 
-# In[49]:
+# In[40]:
 
 
 class TranslationChecker:
@@ -1006,7 +1008,7 @@ class TranslationChecker:
         print('  French Words: {}'.format(" ".join([target_int_to_vocab[i] for i in logits])))
 
 
-# In[46]:
+# In[41]:
 
 
 class InputSentencePreparer:
@@ -1023,13 +1025,13 @@ class InputSentencePreparer:
         return [vocab_to_int.get(word, vocab_to_int['<UNK>']) for word in words]
 
 
-# In[47]:
+# In[42]:
 
 
 sentence = 'he saw a old yellow truck .'
 
 
-# In[53]:
+# In[43]:
 
 
 translationChecker = TranslationChecker()

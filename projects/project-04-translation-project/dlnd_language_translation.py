@@ -383,7 +383,7 @@ tests.test_decoding_layer_infer(decoding_layer_infer)
 # 
 # Note: You'll need to use [tf.variable_scope](https://www.tensorflow.org/api_docs/python/tf/variable_scope) to share variables between training and inference.
 
-# In[12]:
+# In[13]:
 
 
 def decoding_layer(dec_input, encoder_state,
@@ -431,8 +431,9 @@ def decoding_layer(dec_input, encoder_state,
     output_layer = Dense(target_vocab_size,
                          kernel_initializer=initializer)
 
-    # Training decoder
-    with tf.variable_scope("decode"):
+    with tf.variable_scope("decode")as decoding_scope:
+        
+        # Training decoder
         training_decoder_output = decoding_layer_train(encoder_state, 
                                                        dec_cell, 
                                                        dec_embed, 
@@ -441,8 +442,9 @@ def decoding_layer(dec_input, encoder_state,
                                                        output_layer,
                                                        keep_prob)
 
-    # Inference decoder
-    with tf.variable_scope("decode", reuse=True):
+        decoding_scope.reuse_variables()
+        
+        # Inference decoder
         inference_decoder_output = decoding_layer_infer(encoder_state, 
                                                         dec_cell, 
                                                         dec_embedding, 
@@ -470,7 +472,7 @@ tests.test_decoding_layer(decoding_layer)
 # - Process target data using your `process_decoder_input(target_data, target_vocab_to_int, batch_size)` function.
 # - Decode the encoded input using your `decoding_layer(dec_input, enc_state, target_sequence_length, max_target_sentence_length, rnn_size, num_layers, target_vocab_to_int, target_vocab_size, batch_size, keep_prob, dec_embedding_size)` function.
 
-# In[13]:
+# In[14]:
 
 
 def seq2seq_model(input_data, target_data, keep_prob, batch_size,
@@ -547,20 +549,20 @@ tests.test_seq2seq_model(seq2seq_model)
 # - Set `keep_probability` to the Dropout keep probability
 # - Set `display_step` to state how many steps between each debug output statement
 
-# In[14]:
+# In[15]:
 
 
 # Number of Epochs
-epochs = 20
+epochs = 10
 # Batch Size
 batch_size = 128
 # RNN Size
 rnn_size = 256
 # Number of Layers
-num_layers = 2
+num_layers = 3
 # Embedding Size
-encoding_embedding_size = 20
-decoding_embedding_size = 20
+encoding_embedding_size = 128
+decoding_embedding_size = 128
 # Learning Rate
 learning_rate = 0.001
 # Dropout Keep Probability
@@ -571,7 +573,7 @@ display_step = 20
 # ### Build the Graph
 # Build the graph using the neural network you implemented.
 
-# In[15]:
+# In[16]:
 
 
 """
@@ -627,7 +629,7 @@ with train_graph.as_default():
 
 # Batch and pad the source and target sequences
 
-# In[16]:
+# In[17]:
 
 
 """
@@ -667,7 +669,7 @@ def get_batches(sources, targets, batch_size, source_pad_int, target_pad_int):
 # ### Train
 # Train the neural network on the preprocessed data. If you have a hard time getting a good loss, check the forms to see if anyone is having the same problem.
 
-# In[17]:
+# In[19]:
 
 
 """
@@ -754,7 +756,7 @@ with tf.Session(graph=train_graph) as sess:
 # ### Save Parameters
 # Save the `batch_size` and `save_path` parameters for inference.
 
-# In[18]:
+# In[20]:
 
 
 """
@@ -766,7 +768,7 @@ helper.save_params(save_path)
 
 # # Checkpoint
 
-# In[19]:
+# In[21]:
 
 
 """
