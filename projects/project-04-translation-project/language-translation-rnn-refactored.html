@@ -12929,6 +12929,9 @@ WARNING:tensorflow:&lt;tensorflow.contrib.rnn.python.ops.core_rnn_cell_impl.LSTM
     <span class="k">def</span> <span class="nf">get_accuracy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">logits</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate accuracy.</span>
+<span class="sd">        </span>
+<span class="sd">        :param target: Target batch</span>
+<span class="sd">        :param logits: Logits</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">max_seq</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">logits</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
         
@@ -14176,6 +14179,12 @@ Model Trained and Saved
                           <span class="n">target_int_to_vocab</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Check translation of a sample sentence.</span>
+<span class="sd">        </span>
+<span class="sd">        :param checkpoint: Checkpoint</span>
+<span class="sd">        :param sentence: Input sentence</span>
+<span class="sd">        :param source_vocab_to_int: Dictionary of source vocab to ids</span>
+<span class="sd">        :param source_int_to_vocab: Dictionary of source ids to words</span>
+<span class="sd">        :param target_int_to_vocab: Dictionary of target ids to words</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         
         <span class="c1"># Convert input sentence into int seq</span>
@@ -14230,6 +14239,14 @@ Model Trained and Saved
                           <span class="n">logits</span><span class="p">,</span> 
                           <span class="n">source_int_to_vocab</span><span class="p">,</span> 
                           <span class="n">target_int_to_vocab</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Print translation of input sentence.</span>
+<span class="sd">        </span>
+<span class="sd">        :param input_seq: Int sequence corresponding to input sentence</span>
+<span class="sd">        :param logits: Translation logits</span>
+<span class="sd">        :param source_int_to_vocab: Dictionary of source ids to words</span>
+<span class="sd">        :param target_int_to_vocab: Dictionary of target ids to words</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Input&#39;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;  Word Ids:      </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">input_seq</span><span class="p">]))</span>

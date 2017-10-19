@@ -833,6 +833,9 @@ class AccuracyCalculator:
     def get_accuracy(self, target, logits):
         """
         Calculate accuracy.
+        
+        :param target: Target batch
+        :param logits: Logits
         """
         max_seq = max(target.shape[1], logits.shape[1])
         
@@ -925,6 +928,12 @@ class TranslationChecker:
                           target_int_to_vocab):
         """
         Check translation of a sample sentence.
+        
+        :param checkpoint: Checkpoint
+        :param sentence: Input sentence
+        :param source_vocab_to_int: Dictionary of source vocab to ids
+        :param source_int_to_vocab: Dictionary of source ids to words
+        :param target_int_to_vocab: Dictionary of target ids to words
         """
         
         # Convert input sentence into int seq
@@ -979,6 +988,14 @@ class TranslationChecker:
                           logits, 
                           source_int_to_vocab, 
                           target_int_to_vocab):
+        """
+        Print translation of input sentence.
+        
+        :param input_seq: Int sequence corresponding to input sentence
+        :param logits: Translation logits
+        :param source_int_to_vocab: Dictionary of source ids to words
+        :param target_int_to_vocab: Dictionary of target ids to words
+        """
         
         print('Input')
         print('  Word Ids:      {}'.format([i for i in input_seq]))
