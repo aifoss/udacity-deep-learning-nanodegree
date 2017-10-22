@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# # Image Classification
+# # Image Classification CNN
 
 # In[1]:
 
